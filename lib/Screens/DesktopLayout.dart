@@ -42,19 +42,88 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                       height: Get.height / 24.4,
                       child: TextField(
                         controller: homecontroller.searchController,
+                        onSubmitted: (_) => homecontroller
+                            .performSearch(), // also search on Enter
                         decoration: InputDecoration(
                           hintText: 'Search',
-                          prefixIcon: Icon(Icons.search),
+                          contentPadding: EdgeInsets.only(
+                            top: 10,
+                            bottom: 10,
+                            left: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
-                          suffixIcon: InkWell(
-                            onTap: () {},
-                            child: Icon(Icons.filter_list_alt),
+                          suffixIcon: SizedBox(
+                            width: 150,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                // Search icon - triggers the search endpoint
+                                InkWell(
+                                  onTap: () => homecontroller.performSearch(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                    ),
+                                    child: Icon(Icons.search_rounded),
+                                  ),
+                                ),
+
+                                SizedBox(width: 10),
+
+                                // Filter icon - opens a small popup menu below the icon
+                                PopupMenuButton<String>(
+                                  tooltip: 'Filter by priority',
+                                  icon: Icon(Icons.filter_list_alt),
+                                  onSelected: (value) {
+                                    homecontroller.filterTicketsByPriority(
+                                      value,
+                                    );
+                                  },
+                                  itemBuilder: (context) =>
+                                      <PopupMenuEntry<String>>[
+                                        CheckedPopupMenuItem<String>(
+                                          value: 'ALL',
+                                          checked:
+                                              homecontroller
+                                                  .currentPriorityFilter ==
+                                              'ALL',
+                                          child: Text('All'),
+                                        ),
+                                        CheckedPopupMenuItem<String>(
+                                          value: 'HIGH',
+                                          checked:
+                                              homecontroller
+                                                  .currentPriorityFilter ==
+                                              'HIGH',
+                                          child: Text('High'),
+                                        ),
+                                        CheckedPopupMenuItem<String>(
+                                          value: 'MEDIUM',
+                                          checked:
+                                              homecontroller
+                                                  .currentPriorityFilter ==
+                                              'MEDIUM',
+                                          child: Text('Medium'),
+                                        ),
+                                        CheckedPopupMenuItem<String>(
+                                          value: 'LOW',
+                                          checked:
+                                              homecontroller
+                                                  .currentPriorityFilter ==
+                                              'LOW',
+                                          child: Text('Low'),
+                                        ),
+                                      ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
+
                     SizedBox(height: Get.height / 48.76),
                     Text(
                       "All Tickets (${homecontroller.allTickets.length})",

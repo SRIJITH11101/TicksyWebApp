@@ -8,7 +8,7 @@ import 'package:ticksy_web/Models/SignUpReq.dart';
 import 'package:ticksy_web/Models/Ticket.dart';
 
 class ApiRequests {
-  final String baseUrl = 'http://localhost:8080';
+  final String baseUrl = 'http://34.61.45.33:8080';
 
   Future<AuthRes?> signupStaff(SignUpReq request) async {
     final response = await http.post(
@@ -129,6 +129,27 @@ class ApiRequests {
       return data.map((json) => Ticket.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load tickets: ${response.statusCode}');
+    }
+  }
+
+  Future<void> closeTicket(String ticketId, String accessToken) async {
+    final url = Uri.parse('$baseUrl/api/tickets/close/$ticketId');
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        // If your API is secured, include this line:
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('✅ Ticket closed successfully!');
+      print('Response: ${response.body}');
+    } else {
+      print('❌ Failed to close ticket. Status: ${response.statusCode}');
+      print('Body: ${response.body}');
     }
   }
 }

@@ -18,6 +18,8 @@ class ChatController extends GetxController {
   final authStorage = GetStorage();
   final isLoading = true.obs;
   final chatList = <Message>[].obs;
+  String? originalLangOfTicket;
+  bool isClosing = false;
 
   StompClient? stompClient;
 
@@ -45,11 +47,46 @@ class ChatController extends GetxController {
         authStorage.read('accessToken'),
       );
       chatList.assignAll(fetched);
+
+      // ✅ Capture the original language from the first message
+      if (chatList.isNotEmpty) {
+        originalLangOfTicket = chatList.first.originalLang;
+        print(
+          "🌐 Original language of ticket $ticketId: $originalLangOfTicket",
+        );
+      }
+
       print("✅ Loaded ${chatList.length} messages for ticket $ticketId");
     } catch (e) {
       print("❌ Error fetching messages for ticket $ticketId: $e");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> closeTicket() async {
+    try {
+      isClosing = true;
+      update();
+
+      await api.closeTicket(ticketId, authStorage.read('accessToken'));
+      print("✅ Ticket closed on server");
+
+      // ✅ Update local model
+      final ticket = getTicket();
+      if (ticket != null) {
+        ticket.status = "CLOSED";
+        print("🧩 Ticket status updated locally to CLOSED");
+      }
+
+      // ✅ Trigger UI rebuild
+      update();
+      hmController.update();
+    } catch (e) {
+      print("❌ Error closing ticket for $ticketId: $e");
+    } finally {
+      isClosing = false;
+      update();
     }
   }
 
@@ -59,7 +96,7 @@ class ChatController extends GetxController {
 
     stompClient = StompClient(
       config: StompConfig.sockJS(
-        url: 'http://localhost:8080/ws',
+        url: 'http://34.61.45.33:8080/ws',
         onConnect: (StompFrame frame) {
           print('✅ WebSocket connected');
 
@@ -103,7 +140,7 @@ class ChatController extends GetxController {
       'ticketId': ticketId,
       'text': msgText,
       'originalLang': 'en',
-      'translatedLang': 'en',
+      'translatedLang': originalLangOfTicket ?? 'en',
       'sentBy': 'AGENT',
       'attachmentUrls': [],
     };
@@ -132,7 +169,7 @@ class ChatController extends GetxController {
 
   String get ticketName {
     final ticket = getTicket();
-    return ticket?.subject ?? "Unknown Ticket";
+    return ticket?.translatedSubject ?? "Unknown Ticket";
   }
 
   String get ticketDepartment {

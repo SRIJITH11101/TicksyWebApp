@@ -49,11 +49,11 @@ class ChatViewWidget extends StatelessWidget {
                       const SizedBox(height: 5),
                       Row(
                         children: [
-                          _infoBox(chController.ticketStatus),
+                          _infoStatusBox(chController.ticketStatus),
                           SizedBox(width: width / 288),
-                          _infoBox(chController.ticketPriority),
+                          _infoPriorityBox(chController.ticketPriority),
                           SizedBox(width: width / 288),
-                          _infoBox(chController.ticketDepartment),
+                          _infoDeptBox(chController.ticketDepartment),
                         ],
                       ),
                     ],
@@ -78,25 +78,90 @@ class ChatViewWidget extends StatelessWidget {
   }
 
   // ---------------- Info Box Widget ----------------
-  Widget _infoBox(String text) {
+  Widget _infoDeptBox(String text) {
     return Container(
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.black),
+        border: Border.all(color: Colors.blue),
       ),
       child: Center(
-        child: Text(text, style: GoogleFonts.alexandria(fontSize: 12)),
+        child: Text(
+          text,
+          style: GoogleFonts.alexandria(fontSize: 12, color: Colors.blue),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoStatusBox(String text) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: text == "NEW"
+              ? Colors.green
+              : text == "ONGOING"
+              ? Colors.yellow
+              : Colors.red,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: GoogleFonts.alexandria(
+            fontSize: 12,
+            color: text == "NEW"
+                ? Colors.green
+                : text == "ONGOING"
+                ? Colors.yellow
+                : Colors.red,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoPriorityBox(String text) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: text == "LOW"
+              ? Colors.green
+              : text == "MEDIUM"
+              ? Colors.yellow
+              : Colors.red,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: GoogleFonts.alexandria(
+            fontSize: 12,
+            color: text == "LOW"
+                ? Colors.green
+                : text == "MEDIUM"
+                ? Colors.yellow
+                : Colors.red,
+          ),
+        ),
       ),
     );
   }
 
   // ---------------- Close Button ----------------
   Widget _closeButton() {
+    final ChatController chController = Get.find<ChatController>();
     return InkWell(
       onTap: () {
         // TODO: Add close ticket logic
+        chController.closeTicket();
       },
       child: Container(
         height: height / 26.18,
@@ -106,14 +171,16 @@ class ChatViewWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Center(
-          child: Text(
-            "Close Ticket",
-            style: GoogleFonts.alexandria(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
+          child: chController.isClosing
+              ? CircularProgressIndicator()
+              : Text(
+                  "Close Ticket",
+                  style: GoogleFonts.alexandria(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
         ),
       ),
     );
@@ -130,9 +197,17 @@ class ChatViewWidget extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
+              minLines: 1,
+              maxLines: 6,
+              keyboardType: TextInputType.multiline,
+              enabled: chController.ticketStatus.toLowerCase() == "closed"
+                  ? false
+                  : true,
               controller: chController.msgController,
               decoration: InputDecoration(
-                hintText: "Type your message...",
+                hintText: chController.ticketStatus.toLowerCase() == "closed"
+                    ? "Can't message as Ticket is Closed"
+                    : "Type your message...",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

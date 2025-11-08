@@ -26,7 +26,8 @@ class _ChatWidgetState extends State<ChatWidget> {
     final bool isUser = widget.chat.sentBy == "USER";
     final bool isAgent = widget.chat.sentBy == "AGENT";
 
-    final String messageText = widget.chat.translatedText?.isNotEmpty == true
+    final String messageText =
+        widget.chat.translatedText?.isNotEmpty == true && isUser
         ? widget.chat.translatedText!
         : widget.chat.text;
 

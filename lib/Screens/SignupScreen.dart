@@ -24,7 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
               Container(
                 width: Get.width / 1.78,
                 child: Image.asset(
-                  'assets/images/authbg.jpg',
+                  'assets/images/authbg1.jpg',
                   fit: BoxFit.contain, // keeps aspect ratio
                 ),
               ),

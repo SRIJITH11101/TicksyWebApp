@@ -7,10 +7,11 @@ class Ticket {
   final String translatedDescription;
   final String department;
   final String priority;
-  final String status;
+  String status;
   final bool isOpen;
   final String originalLang;
   final String translateLang;
+  final String createdBy; // ✅ Newly added field
   final DateTime createdAt;
 
   Ticket({
@@ -26,6 +27,7 @@ class Ticket {
     required this.isOpen,
     required this.originalLang,
     required this.translateLang,
+    required this.createdBy, // ✅ Added to constructor
     required this.createdAt,
   });
 
@@ -43,6 +45,7 @@ class Ticket {
       isOpen: json['isOpen'],
       originalLang: json['originalLang'],
       translateLang: json['translateLang'],
+      createdBy: json['createdBy'] ?? '', // ✅ Safe parsing
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
@@ -61,6 +64,7 @@ class Ticket {
       'isOpen': isOpen,
       'originalLang': originalLang,
       'translateLang': translateLang,
+      'createdBy': createdBy, // ✅ Added here
       'createdAt': createdAt.toIso8601String(),
     };
   }

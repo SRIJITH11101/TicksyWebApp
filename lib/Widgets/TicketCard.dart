@@ -54,9 +54,9 @@ class _TicketCardState extends State<TicketCard> {
                     ),
                     SizedBox(width: Get.width / 144),
                     Text(
-                      "ticket.userId", // Or display staff name if available
+                      ticket.createdBy, // Or display staff name if available
                       style: GoogleFonts.alexandria(
-                        fontSize: 15,
+                        fontSize: 17,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -75,7 +75,7 @@ class _TicketCardState extends State<TicketCard> {
 
                 // ───── Subject ─────
                 Text(
-                  ticket.subject,
+                  ticket.translatedSubject,
                   style: GoogleFonts.alexandria(
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
@@ -87,11 +87,11 @@ class _TicketCardState extends State<TicketCard> {
                 // ───── Tags: Status / Priority / Department ─────
                 Row(
                   children: [
-                    _buildTag(ticket.status),
+                    _buildStatusTag(ticket.status),
                     SizedBox(width: Get.width / 288),
-                    _buildTag(ticket.priority),
+                    _buildPriorityTag(ticket.priority),
                     SizedBox(width: Get.width / 288),
-                    _buildTag(ticket.department),
+                    _buildDeptTag(ticket.department),
                   ],
                 ),
               ],
@@ -103,18 +103,82 @@ class _TicketCardState extends State<TicketCard> {
   }
 
   // Helper widget for small tags
-  Widget _buildTag(String text) {
+  Widget _buildDeptTag(String text) {
     return Container(
       height: Get.height / 45,
       padding: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.black),
+        border: Border.all(color: Colors.blue),
       ),
       alignment: Alignment.center,
       child: Text(
         text,
-        style: GoogleFonts.alexandria(fontSize: 8, fontWeight: FontWeight.w400),
+        style: GoogleFonts.alexandria(
+          fontSize: 8,
+          fontWeight: FontWeight.w400,
+          color: Colors.blue,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusTag(String text) {
+    return Container(
+      height: Get.height / 45,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: text == "NEW"
+              ? Colors.green
+              : text == "ONGOING"
+              ? Colors.yellow
+              : Colors.red,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: GoogleFonts.alexandria(
+          fontSize: 8,
+          fontWeight: FontWeight.w400,
+          color: text == "NEW"
+              ? Colors.green
+              : text == "ONGOING"
+              ? Colors.yellow
+              : Colors.red,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityTag(String text) {
+    return Container(
+      height: Get.height / 45,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: text == "LOW"
+              ? Colors.green
+              : text == "MEDIUM"
+              ? Colors.yellow
+              : Colors.red,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: GoogleFonts.alexandria(
+          fontSize: 8,
+          fontWeight: FontWeight.w400,
+          color: text == "LOW"
+              ? Colors.green
+              : text == "MEDIUM"
+              ? Colors.yellow
+              : Colors.red,
+        ),
       ),
     );
   }

@@ -10,9 +10,18 @@ class HomeController extends GetxController {
   final api = ApiRequests();
   final TextEditingController searchController = TextEditingController();
   bool isTicketFetching = false;
-  List<Ticket> allTickets = [];
-  List<Ticket> selectedList = [];
+
+  // Source lists:
+  List<Ticket> allTickets = []; // raw full list from loadTickets()
+  List<Ticket> unfilteredList =
+      []; // the last "source" list (either allTickets or search results)
+  List<Ticket> selectedList =
+      []; // the list actually shown in UI (after filtering)
+
   int ticketListSize = 7;
+
+  // current priority filter: 'ALL','HIGH','MEDIUM','LOW'
+  String currentPriorityFilter = 'ALL';
 
   @override
   Future<void> onInit() async {
@@ -23,11 +32,19 @@ class HomeController extends GetxController {
   Future<void> loadTickets() async {
     isTicketFetching = true;
     update();
+
     allTickets = await api.fetchUserTickets(
       authStorage.read('department'),
       authStorage.read('accessToken'),
     );
-    selectedList = allTickets;
+
+    // When loading default tickets, both unfiltered and displayed list should come from allTickets
+    unfilteredList = List.from(allTickets);
+    selectedList = List.from(unfilteredList);
+
+    // reset priority filter
+    currentPriorityFilter = 'ALL';
+
     isTicketFetching = false;
     update();
   }
@@ -41,137 +58,85 @@ class HomeController extends GetxController {
     selectedTicketId = id;
     print("ticket id: $id .....................");
 
+    // Optimistic local update: if ticket is NEW, mark it ONGOING immediately
+    _setTicketStatusLocally(id, 'ONGOING');
+
     // Dispose old ChatController if any
     if (Get.isRegistered<ChatController>()) {
       Get.delete<ChatController>();
     }
+
     // Initialize new ChatController with selected ticket
     ChatController chController = Get.put(ChatController(ticketId: id));
     chController.isLoading.value = false;
     chController.update();
+
+    update(); // update Home UI
+  }
+
+  // helper: update status in all source lists so UI sees it everywhere
+  void _setTicketStatusLocally(String ticketId, String newStatus) {
+    for (final list in [allTickets, unfilteredList, selectedList]) {
+      for (int i = 0; i < list.length; i++) {
+        if (list[i].id == ticketId) {
+          list[i].status = newStatus;
+        }
+      }
+    }
     update();
   }
 
-  Future<void> searchTicket() async {
+  /// Called when the user presses the search icon or submits the search text.
+  /// If the query is empty -> fall back to loadTickets()
+  /// else -> call search endpoint and update unfilteredList + selectedList.
+  Future<void> performSearch() async {
+    final query = searchController.text.trim();
+    if (query.isEmpty) {
+      // revert to default full fetch
+      await loadTickets();
+      return;
+    }
+
     isTicketFetching = true;
     update();
-    selectedList = await api.searchTicket(
-      searchController.text.trim(),
-      authStorage.read('accessToken'),
-    );
-    isTicketFetching = false;
+    try {
+      final results =
+          await api.searchTicket(query, authStorage.read('accessToken')) ??
+          <Ticket>[];
+
+      // results become the source for subsequent filtering (so filter can be applied on search results)
+      unfilteredList = List.from(results);
+
+      // if a priority filter is already active, apply it; otherwise show full results
+      if (currentPriorityFilter != 'ALL') {
+        _applyPriorityFilterOnUnfiltered();
+      } else {
+        selectedList = List.from(unfilteredList);
+      }
+    } finally {
+      isTicketFetching = false;
+      update();
+    }
+  }
+
+  /// Filter currently-displayed set of tickets by priority.
+  /// Priority values: 'ALL', 'HIGH', 'MEDIUM', 'LOW'
+  void filterTicketsByPriority(String priority) {
+    currentPriorityFilter = priority.toUpperCase();
+    _applyPriorityFilterOnUnfiltered();
     update();
   }
 
-  // final List<Map<String, dynamic>> allTickets = [
-  //   {
-  //     "ticketId": "TCKT001",
-  //     "ticketName": "Failed Online Transaction",
-  //     "ticketDescription":
-  //         "Customer reports failed UPI payment but amount debited.",
-  //     "ticketStatus": "New",
-  //     "ticketPriority": "High",
-  //     "ticketDepartment": "Payments",
-  //     "creationTime": "2025-08-20 10:15:00",
-  //     "lastUpdatedTime": "2025-08-20 10:15:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT002",
-  //     "ticketName": "ATM Cash Not Dispensed",
-  //     "ticketDescription":
-  //         "ATM did not dispense cash, amount deducted from account.",
-  //     "ticketStatus": "Ongoing",
-  //     "ticketPriority": "High",
-  //     "ticketDepartment": "ATM Services",
-  //     "creationTime": "2025-08-19 09:45:00",
-  //     "lastUpdatedTime": "2025-08-20 11:30:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT003",
-  //     "ticketName": "Update Contact Number",
-  //     "ticketDescription": "Customer requested mobile number update.",
-  //     "ticketStatus": "Closed",
-  //     "ticketPriority": "Low",
-  //     "ticketDepartment": "Customer Support",
-  //     "creationTime": "2025-08-18 14:20:00",
-  //     "lastUpdatedTime": "2025-08-19 12:10:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT004",
-  //     "ticketName": "Credit Card Limit Increase",
-  //     "ticketDescription":
-  //         "Request for increasing credit card limit due to higher usage.",
-  //     "ticketStatus": "Ongoing",
-  //     "ticketPriority": "Medium",
-  //     "ticketDepartment": "Credit Cards",
-  //     "creationTime": "2025-08-17 16:50:00",
-  //     "lastUpdatedTime": "2025-08-20 13:00:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT005",
-  //     "ticketName": "Cheque Clearance Delay",
-  //     "ticketDescription":
-  //         "Cheque deposited but not cleared for more than 3 working days.",
-  //     "ticketStatus": "New",
-  //     "ticketPriority": "Medium",
-  //     "ticketDepartment": "Branch Operations",
-  //     "creationTime": "2025-08-21 09:30:00",
-  //     "lastUpdatedTime": "2025-08-21 09:30:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT006",
-  //     "ticketName": "NetBanking Login Issue",
-  //     "ticketDescription":
-  //         "Customer unable to login to netbanking with correct credentials.",
-  //     "ticketStatus": "Ongoing",
-  //     "ticketPriority": "High",
-  //     "ticketDepartment": "IT Support",
-  //     "creationTime": "2025-08-20 18:40:00",
-  //     "lastUpdatedTime": "2025-08-21 08:20:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT007",
-  //     "ticketName": "Debit Card Block Request",
-  //     "ticketDescription":
-  //         "Lost debit card, customer requested to block immediately.",
-  //     "ticketStatus": "Closed",
-  //     "ticketPriority": "High",
-  //     "ticketDepartment": "Card Services",
-  //     "creationTime": "2025-08-19 11:25:00",
-  //     "lastUpdatedTime": "2025-08-19 11:40:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT008",
-  //     "ticketName": "Loan Prepayment Inquiry",
-  //     "ticketDescription":
-  //         "Customer requested details about loan prepayment penalties.",
-  //     "ticketStatus": "New",
-  //     "ticketPriority": "Low",
-  //     "ticketDepartment": "Loans",
-  //     "creationTime": "2025-08-21 12:10:00",
-  //     "lastUpdatedTime": "2025-08-21 12:10:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT009",
-  //     "ticketName": "Wrong Beneficiary Transfer",
-  //     "ticketDescription":
-  //         "Funds transferred to wrong account due to incorrect IFSC.",
-  //     "ticketStatus": "Ongoing",
-  //     "ticketPriority": "High",
-  //     "ticketDepartment": "Payments",
-  //     "creationTime": "2025-08-20 15:30:00",
-  //     "lastUpdatedTime": "2025-08-21 09:15:00",
-  //   },
-  //   {
-  //     "ticketId": "TCKT010",
-  //     "ticketName": "Passbook Printing Request",
-  //     "ticketDescription":
-  //         "Customer requested for updated passbook printing at branch.",
-  //     "ticketStatus": "Closed",
-  //     "ticketPriority": "Low",
-  //     "ticketDepartment": "Branch Operations",
-  //     "creationTime": "2025-08-18 10:00:00",
-  //     "lastUpdatedTime": "2025-08-18 15:30:00",
-  //   },
-  // ];
+  // internal helper that filters `unfilteredList` using currentPriorityFilter
+  void _applyPriorityFilterOnUnfiltered() {
+    if (currentPriorityFilter == 'ALL') {
+      selectedList = List.from(unfilteredList);
+      return;
+    }
+
+    selectedList = unfilteredList.where((t) {
+      final p = (t.priority ?? '').toString().toUpperCase();
+      return p == currentPriorityFilter;
+    }).toList();
+  }
 }
