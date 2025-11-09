@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:ticksy_web/Controllers/ChatController.dart';
-import 'package:ticksy_web/WIdgets/ChatWidget.dart';
+import 'package:ticksy_web/Widgets/ChatWidget.dart';
 
 class ChatListWidget extends StatelessWidget {
   ChatListWidget({super.key});

@@ -78,7 +78,7 @@ class HomeController extends GetxController {
   void _setTicketStatusLocally(String ticketId, String newStatus) {
     for (final list in [allTickets, unfilteredList, selectedList]) {
       for (int i = 0; i < list.length; i++) {
-        if (list[i].id == ticketId) {
+        if (list[i].id == ticketId && list[i].status == "NEW") {
           list[i].status = newStatus;
         }
       }
