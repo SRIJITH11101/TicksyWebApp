@@ -126,7 +126,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
 
                     SizedBox(height: Get.height / 48.76),
                     Text(
-                      "All Tickets (${homecontroller.allTickets.length})",
+                      "All Tickets (${homecontroller.selectedList.length})",
                       style: GoogleFonts.alexandria(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,

@@ -25,9 +25,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 width: Get.width / 1.78,
                 child: Image.asset(
                   'assets/images/authbg1.jpg',
-                  fit: BoxFit.contain, // keeps aspect ratio
+                  fit: BoxFit.fill, // keeps aspect ratio
                 ),
               ),
+              SizedBox(width: 60),
               Container(
                 child: Form(
                   key: sgController.signUpKey,
